@@ -1,8 +1,11 @@
 package core
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"log"
+	"time"
 )
 
 // Blockchain 是一个简易的"区块链"结构体，区块链由多个区块构成
@@ -13,8 +16,17 @@ import (
 // MaxTransactionAmountPerBlock 时，这些交易才会被一并打包成一个区块并上链
 type Blockchain struct {
 	Blocks                       []*Block
-	PendingTransactions          []string
+	PendingTransactions          []*transaction
 	MaxTransactionAmountPerBlock int
+}
+
+// 用来存放一次交易的信息
+type transaction struct {
+	From            string
+	To              string
+	Value           int
+	FullName        string
+	TransactionHash string
 }
 
 // NewBlockchain 会初始化一个 Blockchain 结构体并返回，该区块链每个区块的最大交易数量会被设置为传入的参数maxTransactionAmountPerBlock
@@ -41,11 +53,27 @@ func NewBlockchain(maxTransactionAmountPerBlock int) *Blockchain {
 // (1)将交易添加到区块链的待上链交易中
 //
 // (2)判断待处理交易数量，如果数量大于前面设置的每个区块最大可容纳交易数量，则使用 GenerateNewBlock 函数生成一个新区块，再使用 AppendNewBlock 函数将该区块添加到区块链中，否则不作任何操作
-func (bc *Blockchain) SendTransaction(transaction string) {
-	bc.PendingTransactions = append(bc.PendingTransactions, transaction)
+func (bc *Blockchain) SendTransaction(from string, to string, value int) {
+
+	//先初始化这次交易
+	NewTran := new(transaction)
+	NewTran.From = from
+	NewTran.To = to
+	NewTran.Value = value
+	NewTran.FullName = from + " gave " + to + " " + string(value) + " dollar"
+	//对应此次交易的hash
+	record := NewTran.FullName + string(time.Now().Unix())
+	h := sha256.New()
+	h.Write([]byte(record))
+	hashed := h.Sum(nil)
+	hashValue := hex.EncodeToString(hashed)
+	//返回生成的Hash
+	NewTran.TransactionHash = hashValue //存储
+
+	bc.PendingTransactions = append(bc.PendingTransactions, NewTran)
 	if len(bc.PendingTransactions) >= bc.MaxTransactionAmountPerBlock {
 		bc.AppendNewBlock(GenerateNewBlock(bc.Blocks[len(bc.Blocks)-1], bc.PendingTransactions))
-		bc.PendingTransactions = []string{}
+		bc.PendingTransactions = []*transaction{}
 	}
 }
 
@@ -98,7 +126,7 @@ func (bc *Blockchain) Print() {
 		fmt.Println("\t", "-hash: ", bc.Blocks[i].Hash)
 		fmt.Println("\t", "-transactions:")
 		for j := range bc.Blocks[i].Transactions {
-			fmt.Println("\t\t", "--transaction", j, "of block", i, ":", bc.Blocks[i].Transactions[j])
+			fmt.Println("\t\t", "--transaction", j, "of block", i, ":", bc.Blocks[i].Transactions[j].FullName)
 		}
 	}
 }

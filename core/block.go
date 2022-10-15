@@ -22,7 +22,7 @@ type Block struct {
 	TimeStamp    int64
 	PreviousHash string
 	Hash         string
-	Transactions []string
+	Transactions []*transaction
 }
 
 // MerkleNode MerkleTree 节点
@@ -48,14 +48,15 @@ type MerkleTree struct {
 // (4)通过 CalculateHash 函数计算该区块的哈希值，并将结果赋给该实例的 Hash 字段
 //
 // (5)返回该区块实例
-func GenerateNewBlock(previousBlock *Block, transactions []string) *Block {
+func GenerateNewBlock(previousBlock *Block, transaction []*transaction) *Block {
 	block := new(Block) //定义一个新块
 
 	block.Index = previousBlock.Index + 1
 	block.TimeStamp = time.Now().Unix()
 	block.PreviousHash = previousBlock.Hash
+	block.Transactions = transaction
 	block.Hash = CalculateHash(block)
-	block.Transactions = transactions
+
 	return block
 }
 
@@ -63,19 +64,12 @@ func GenerateNewBlock(previousBlock *Block, transactions []string) *Block {
 func CalculateHash(b *Block) string {
 	var hashValue string
 
-	//data := make([][]byte, len(b.Transactions))
-	//for i := range data {
-	//	data[i] = make([]byte, len([]byte(b.Transactions[0])))
-	//}
-	//for _, temp := range b.Transactions {
-	//	data = append(data, []byte(temp))
-	//}
+	var data [][]byte
+	for _, temp := range b.Transactions {
+		data = append(data, []byte(temp.TransactionHash))
+	}
+	tree := NewMerkleTree(data) //将交易的信息传入merkle
 
-	//正确的代码应该是上面括号内的，但是总有错
-
-	data := [][]byte{[]byte("b.Transactions[0]"), []byte("b.Transactions[1]")}
-
-	tree := NewMerkleTree(data)
 	hashValue = hex.EncodeToString(tree.RootNode.Data)
 	return hashValue
 }
@@ -87,7 +81,12 @@ func GenerateGenesisBlock() *Block {
 	block.Index = 0
 	block.PreviousHash = ""
 	block.TimeStamp = time.Now().Unix()
-	block.Transactions = []string{"***genesis block***"}
+	block.Transactions = []*transaction{
+		{
+			FullName: "***genesis block***",
+		},
+	}
+
 	block.Hash = CalculateHash(block)
 	return block
 }
