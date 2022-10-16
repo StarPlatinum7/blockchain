@@ -2,22 +2,26 @@ package main
 
 import (
 	"blockchain_example/core"
+	"math/rand"
+	"time"
 )
 
 func main() {
+
 	//初始化一个区块链实例
 	myBlockchain := core.NewBlockchain(2)
 	//向区块链中先后添加6笔交易，每笔交易间延时1~3秒，模拟交易间的先后顺序
 	myBlockchain.SendTransaction("Tom", "Mary", 20)
-	//time.Sleep(time.Duration(rand.Intn(3) + 1) * time.Second)
+	time.Sleep(time.Duration(rand.Intn(3)+1) * time.Second)
 	myBlockchain.SendTransaction("Tom", "Lily", 30)
-	//time.Sleep(time.Duration(rand.Intn(3) + 1) * time.Second)
+	time.Sleep(time.Duration(rand.Intn(3)+10) * time.Second)
+
 	myBlockchain.SendTransaction("Aron", "Tom", 10)
-	//time.Sleep(time.Duration(rand.Intn(3) + 1) * time.Second)
+	time.Sleep(time.Duration(rand.Intn(3)+10) * time.Second) //----->时间修改，使得上面的变为一个仅有一笔交易的新的块，时间限制8s
 	myBlockchain.SendTransaction("Byron", "Lily", 15)
-	//time.Sleep(time.Duration(rand.Intn(3) + 1) * time.Second)
+	time.Sleep(time.Duration(rand.Intn(3)+1) * time.Second)
 	myBlockchain.SendTransaction("Joe", "Tom", 20)
-	//time.Sleep(time.Duration(rand.Intn(3) + 1) * time.Second)
+	time.Sleep(time.Duration(rand.Intn(3)+1) * time.Second)
 	myBlockchain.SendTransaction("Lily", "Mary", 40)
 
 	//打印区块链中的交易历史
