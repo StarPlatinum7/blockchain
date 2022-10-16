@@ -52,7 +52,8 @@ func NewBlockchain(maxTransactionAmountPerBlock int) *Blockchain {
 //
 // (1)将交易添加到区块链的待上链交易中
 //
-// (2)判断待处理交易数量，如果数量大于前面设置的每个区块最大可容纳交易数量，则使用 GenerateNewBlock 函数生成一个新区块，再使用 AppendNewBlock 函数将该区块添加到区块链中，否则不作任何操作
+// (2)判断待处理交易数量，如果数量大于前面设置的每个区块最大可容纳交易数量，则使用 GenerateNewBlock 函数生成一个新区块，再使用 AppendNewBlock
+// 函数将该区块添加到区块链中，否则不作任何操作
 func (bc *Blockchain) SendTransaction(from string, to string, value int) {
 
 	//先初始化这次交易
@@ -60,7 +61,20 @@ func (bc *Blockchain) SendTransaction(from string, to string, value int) {
 	NewTran.From = from
 	NewTran.To = to
 	NewTran.Value = value
-	NewTran.FullName = from + " gave " + to + " " + string(value) + " dollar"
+	NewTran.FullName = from + " gave " + to + " "
+
+	accountts.AppendAccount(GenerateNewAccount(NewTran.To))
+	accountts.AppendAccount(GenerateNewAccount(NewTran.From))
+	//在块中对交易额进行初始化
+	for i, tmp := range accountts.account {
+		if from == tmp.name { //如果交易的发出方在交易中找到
+			accountts.account[i].balance -= value //扣除一定的钱
+		}
+		if to == tmp.name { //如果交易的发出方在交易中找到
+			accountts.account[i].balance += value //扣除一定的钱
+		}
+
+	}
 	//对应此次交易的hash
 	record := NewTran.FullName + string(time.Now().Unix())
 	h := sha256.New()
@@ -126,7 +140,15 @@ func (bc *Blockchain) Print() {
 		fmt.Println("\t", "-hash: ", bc.Blocks[i].Hash)
 		fmt.Println("\t", "-transactions:")
 		for j := range bc.Blocks[i].Transactions {
-			fmt.Println("\t\t", "--transaction", j, "of block", i, ":", bc.Blocks[i].Transactions[j].FullName)
+			fmt.Println("\t\t", "--transaction", j, "of block", i, "\t:", bc.Blocks[i].Transactions[j].FullName, bc.Blocks[i].Transactions[j].Value, " dollar")
 		}
 	}
+}
+
+func PrintAccount() {
+	fmt.Println("\nACCOUNT STATE:")
+	for _, temp := range accountts.account {
+		fmt.Println("account:  ", temp.name, ":\t", temp.address, "  balance: ", temp.balance)
+	}
+
 }
